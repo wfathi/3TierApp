@@ -32,3 +32,9 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+# Ignore Vagrant-specific files and directories
+.vagrant/
+*.vagrant/
+# Ignore sensitive files such as private keys (if applicable)
+*.pem
+*.key

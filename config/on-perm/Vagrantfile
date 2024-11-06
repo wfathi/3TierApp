@@ -1,0 +1,21 @@
+require "yaml"
+
+# Retrieving the proxmox ip from the config file
+config_data = YAML.load_file("config.yml")
+proxmox_ip = config_data["proxmox_ip"]
+
+Vagrant.configure("2") do |config|
+    config.vm.box = "generic/debian12"
+    config.vm.provider "virtualbox" do |lv|
+        lv.memory = 4096
+        lv.cpus = 4
+    end
+    config.vm.hostname = "proxmox"
+    # Host only Adapter
+    config.vm.network :private_network, ip: proxmox_ip
+    config.vm.network :forwarded_port, guest: 8006, host: 8006
+    # Shared folder
+    config.vm.synced_folder ".", "/vagrant"
+    # Provisioning script to install Proxmox VE
+    config.vm.provision :shell, path: "bootstrap.sh"
+end
