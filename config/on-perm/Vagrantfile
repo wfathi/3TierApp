@@ -1,7 +1,7 @@
 require "yaml"
 
 # Retrieving the proxmox ip from the config file
-config_data = YAML.load_file("config.yml")
+config_data = YAML.load_file("config.yaml")
 proxmox_ip = config_data["proxmox_ip"]
 
 Vagrant.configure("2") do |config|
