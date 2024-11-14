@@ -1,4 +1,6 @@
 #!/bin/bash
+# To suppress user prompts 
+export DEBIAN_FRONTEND=noninteractive
 proxmox_ip=$(awk -F': ' '{print $2}' /vagrant/config.yaml)
 cat > /etc/hosts << EOF
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
@@ -14,8 +16,9 @@ source /etc/network/interfaces.d/*
 auto lo
 iface lo inet loopback
 
-auto eth0 inet dhcp
-    dns-nameservers 4.2.2.1 4.2.2.2 208.67.220.220
+auto eth0
+eth0 inet dhcp  
+    dns-nameservers 8.8.8.8 4.2.2.1 4.2.2.2 208.67.220.220
     pre-up sleep 2
 
 iface eth1 inet manual
