@@ -2,7 +2,8 @@
 set -e
 # To suppress user prompts 
 export DEBIAN_FRONTEND=noninteractive
-proxmox_ip=$(awk -F'"' '{print $2}' /vagrant/config.yaml)
+proxmox_ip=$(awk -F'"' '/proxmox_ip/ {print $2}' /vagrant/config.yaml)
+proxmox_gateway=$(awk -F'"' '/proxmox_gateway/ {print $2}' /vagrant/config.yaml)
 echo "Detected Proxmox IP: $proxmox_ip"
 
 cat > /etc/hosts << EOF
@@ -31,6 +32,7 @@ iface eth1 inet manual
 auto vmbr0
 iface vmbr0 inet static
     address $proxmox_ip/24
+    gateway $proxmox_gateway
     bridge-ports eth1
     bridge-stp off
     bridge-fd 0
