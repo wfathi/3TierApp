@@ -1,7 +1,10 @@
 #!/bin/bash
+set -e
 # To suppress user prompts 
 export DEBIAN_FRONTEND=noninteractive
-proxmox_ip=$(awk -F': ' '{print $2}' /vagrant/config.yaml)
+proxmox_ip=$(awk -F'"' '{print $2}' /vagrant/config.yaml)
+echo "Detected Proxmox IP: $proxmox_ip"
+
 cat > /etc/hosts << EOF
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost ip6-localhost ip6-loopback
@@ -17,8 +20,10 @@ auto lo
 iface lo inet loopback
 
 auto eth0
-eth0 inet dhcp  
-    dns-nameservers 8.8.8.8 4.2.2.1 4.2.2.2 208.67.220.220
+iface eth0 inet dhcp  
+    dns-nameserver 8.8.8.8
+    dns-nameserver 4.2.2.1
+    dns-nameserver 4.2.2.2
     pre-up sleep 2
 
 iface eth1 inet manual
@@ -34,10 +39,13 @@ EOF
 echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" > /etc/apt/sources.list.d/pve-install-repo.list
 wget https://enterprise.proxmox.com/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
 
+# Help prevent interactive prompts from the installation of GRUB by specifying in which disk to install the GRUB
+echo "grub-pc grub-pc/install_devices multiselect /dev/sda" | sudo debconf-set-selections
+
 apt update -y && apt full-upgrade -y
 
 apt install -y proxmox-ve ksm-control-daemon locales-all chrony libguestfs-tools
 
 apt remove linux-image-amd64 'linux-image-6.1*' os-prober -y
 
-reboot
+update-grub
