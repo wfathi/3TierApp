@@ -4,6 +4,10 @@ set -e
 export DEBIAN_FRONTEND=noninteractive
 proxmox_ip=$(awk -F'"' '/proxmox_ip/ {print $2}' /vagrant/config.yaml)
 proxmox_gateway=$(awk -F'"' '/proxmox_gateway/ {print $2}' /vagrant/config.yaml)
+password_proxmox_user=$(awk -F'"' '/password_proxmox_user/ {print $2}' /vagrant/config.yaml)
+username_proxmox_user=$(awk -F'"' '/username_proxmox_user/ {print $2}' /vagrant/config.yaml)
+proxmox_tf_user_token_expiration=$(awk -F'"' '/proxmox_token_expiration/ {print $2}' /vagrant/config.yaml)
+proxmox_tf_user_token_path=$(awk -F'"' '/proxmox_tf_user_token_path/ {print $2}' /vagrant/config.yaml)
 echo "Detected Proxmox IP: $proxmox_ip"
 
 cat > /etc/hosts << EOF
@@ -51,3 +55,15 @@ apt install -y proxmox-ve ksm-control-daemon locales-all chrony libguestfs-tools
 apt remove linux-image-amd64 'linux-image-6.1*' os-prober -y
 
 update-grub
+# Terraform Role to create and manage VMs inside of the proxmox for security reasons
+sudo pveum role add TerraformProv -privs "Datastore.Allocate Datastore.AllocateSpace \
+ Datastore.Audit Pool.Allocate Sys.Audit Sys.Console Sys.Modify VM.Allocate VM.Audit \
+ VM.Clone VM.Config.CDROM VM.Config.Cloudinit VM.Config.CPU VM.Config.Disk \ 
+ VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options VM.Console\
+ VM.Migrate VM.Monitor VM.PowerMgmt SDN.Use"
+# Terraform user
+sudo pveum user add $username_proxmox_user --password $password_proxmox_user
+# Attach the Terraform role to the user
+sudo pveum aclmod / -user $username_proxmox_user -role TerraformProv
+# Create a token for the user
+sudo pveum user token add $username_proxmox_user terraform -expire $proxmox_token_expiration -privsep 0 -comment "Terraform token" > $proxmox_tf_user_token_path
