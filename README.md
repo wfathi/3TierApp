@@ -37,7 +37,7 @@ The system is configured with:
 
 ### Usage
 Access Proxmox web interface:
-- URL: https://<proxmox_ip>:8006
+- URL: https://<proxmox_ip>:8006 but you need to change the hosts file in your OS to proxmox.local
 - Terraform user: terraform-prov@pve, who has the rights necessary to create and manage VMs inside of the Proxmox. 
 
 # Contributing
