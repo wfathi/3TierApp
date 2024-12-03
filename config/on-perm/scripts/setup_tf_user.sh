@@ -19,5 +19,5 @@ proxmox_token_value=$(awk '/value.*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 proxmox_token_id=$(awk '/full-tokenid.{3}([a-zA-Z\-@!]+)/ {print $4}' $proxmox_tf_user_token_path)
 sudo apt install -y jq
 sudo jq --arg key1 "proxmox_tf_user_token_value" --arg value1 "$proxmox_token_value" \
-   --arg key2 "proxmox_tf_user_token_id" --arg value2 "$proxmox_token_id/" \
+   --arg key2 "proxmox_tf_user_token_id" --arg value2 "$proxmox_token_id" \
    '. + {($key1): $value1, ($key2): $value2}' $config_file_path > temp.json && mv temp.json $config_file_path
