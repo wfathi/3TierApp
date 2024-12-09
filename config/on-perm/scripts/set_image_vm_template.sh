@@ -8,42 +8,7 @@ sudo qm set $vm_id --scsihw virtio-scsi-pci --scsi0 local:$vm_id/vm-$vm_id-disk-
 sudo qm set $vm_id --boot c --bootdisk scsi0
 sudo qm set $vm_id --ide2 local:cloudinit
 
-sudo apt install -y whois
-passwd=`mkpasswd --method=SHA-512 $proxmox_ubuntu_template_passwd`
-# I'm using cloud init so that the VM settings does not match the template settings (IP conflicts, etc..)
-sudo tee /var/lib/vz/snippets/cloudinit_config.yaml > /dev/null <<EOF 
-#cloud-config
-
-## System Information
-hostname: ubuntu_vm_proxmox
-timezone: $proxmox_time_zone
-
-users:
-  - name: devopsEng
-    sudo: ['ALL=(ALL)']
-    groups: sudo
-    shell: /bin/bash
-    lock_passwd: false
-    passwd: $passwd
-
-network:
-  version: 2
-  ethernets:
-    eth0:
-      dhcp4: true
-
-package_update: true
-package_upgrade: true
-packages:
-  - curl
-  - git
-  - openjdk-11-jdk
-  - maven
-  - python3-pip
-  - jq
-EOF
-
+qm set $vm_id --tags "template"
 sudo qm set $vm_id --agent enabled=1
 sudo qm set $vm_id --serial0 socket --vga serial0
-sudo qm set $vm_id -cicustom user=local:snippets/cloudinit_config.yaml
 sudo qm template $vm_id
