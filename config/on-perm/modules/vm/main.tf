@@ -1,17 +1,4 @@
-terraform {
-  required_providers {
-    proxmox = {
-      source = "bpg/proxmox"
-      version = "0.68.0"
-    }
-  }
-}
-
-provider "proxmox" {
-  endpoint = "https://proxmox-server01.test.com:8006/"
-  api_token = "${var.proxmox_tf_user_token_id}=${var.proxmox_tf_user_token_value}"
-  insecure = true
-}
+# This module creates a VM in Proxmox VE using a template and cloud-init for configuration.
 
 data "proxmox_virtual_environment_vms" "template" {
   node_name = var.target_node
@@ -24,8 +11,8 @@ resource "proxmox_virtual_environment_file" "cloud_config" {
   datastore_id = "local"
 
   source_raw {
-    data = file("${path.module}/cloud-init/${var.vm_hostname}.${var.vm_domain}-ci-user-data.yml")
-    file_name = "${var.vm_hostname}.${var.vm_domain}-ci-user-data.yml"
+    data = file("${path.module}/../../cloud-init/${var.vm_hostname}.${var.vm_domain}-ci-user-data.yaml")
+    file_name = "${var.vm_hostname}.${var.vm_domain}-ci-user-data.yaml"
   }
 }
 
@@ -41,8 +28,8 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
   }
 
   cpu {
-    sockets = var.cpu_sockets
-    cores = var.cpu_cores
+    sockets = var.vm_cpu_sockets
+    cores = var.vm_cpu_cores
     type =  "x86-64-v2-AES"
   }
 
@@ -71,6 +58,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
       interface = "scsi${1 + disk.key}"
       size = disk.value.size
       discard = "ignore"
+      file_format = "raw"
     }
   }
 
@@ -82,40 +70,14 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
     vm_id = data.proxmox_virtual_environment_vms.template.vms[0].vm_id
   }
 
+  keyboard_layout = "fr"
   initialization {
-     user_account {
-      keys     = [trimspace(tls_private_key.ubuntu_vm_key.public_key_openssh)]
-      password = random_password.ubuntu_vm_password.result
-      username = "devops"
+    ip_config {
+      ipv4 {
+        address = "${var.vm_ip_address}"
+        gateway = "${var.vm_ip_gateway}"
+      } 
     }
-    datastore_id = "local"
-    interface = "ide2"
     user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
   }
-}
-
-resource "random_password" "ubuntu_vm_password" {
-  length = 16
-  special = true
-  override_special = "_%@"
-}
-
-resource "tls_private_key" "ubuntu_vm_key" {
-  algorithm = "RSA"
-  rsa_bits = 4096
-}
-
-output "vm_private_key" {
-  value = tls_private_key.ubuntu_vm_key.private_key_pem
-  sensitive = true
-}
-
-output "vm_public_key" {
-  value = tls_private_key.ubuntu_vm_key.public_key_openssh
-  sensitive = true
-}
-
-output "vm_password" {
-  value = random_password.ubuntu_vm_password.result
-  sensitive = true
 }

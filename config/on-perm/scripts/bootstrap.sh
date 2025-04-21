@@ -16,4 +16,4 @@ echo "Detected Proxmox IP: $proxmox_ip"
 
 source /vagrant/scripts/setup_proxmox.sh
 source /vagrant/scripts/setup_tf_user.sh 
-source /vagrant/scripts/setup_image_vm_template.sh 
+source /vagrant/scripts/sety_image_vm_template.sh 

@@ -7,13 +7,14 @@ proxmox_ip = config_data["proxmox_ip"]
 Vagrant.configure("2") do |config|
     config.vm.box = "generic/debian12"
     config.vm.provider "virtualbox" do |lv|
+        lv.name = "proxmox"
         lv.memory = 4096
         lv.cpus = 4
+        # Enable nested virtualization
+        lv.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
     end
     config.vm.hostname = "proxmox"
-    # Bridged Adapter
-    config.vm.network :private_network, ip: proxmox_ip,
-        auto_config: false
+    config.vm.network :private_network, ip: proxmox_ip
     config.vm.network :forwarded_port, guest: 8006, host: 8006
     # Shared folder
     config.vm.synced_folder ".", "/vagrant"

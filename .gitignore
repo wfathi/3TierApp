@@ -39,3 +39,4 @@ terraform.rc
 # Ignore sensitive files such as private keys (if applicable)
 *.pem
 *.key
+*.priv

@@ -6,7 +6,7 @@ ff02::2     ip6-allrouters
 $proxmox_ip proxmox.local proxmox
 EOF
 
-cat > /etc/network/interfaces << EOF
+tee /etc/network/interfaces << EOF
 source /etc/network/interfaces.d/*
 
 auto lo

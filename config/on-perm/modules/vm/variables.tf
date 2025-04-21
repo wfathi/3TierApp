@@ -1,12 +1,5 @@
-variable "proxmox_tf_user_token_value" {
-    description = "Token value to connect Proxmox API"
-    type = string
-}
-
-variable "proxmox_tf_user_token_id" {
-    description = "Token ID to connect Proxmox API"
-    type = string
-}
+# Variables for the VM module
+# This module creates a VM in Proxmox VE using a template and cloud-init for configuration.
 
 variable "target_node" {
     type = string
@@ -22,12 +15,12 @@ variable "template_tag" {
 
 variable "vm_hostname" {
   type = string
-  default = "vm_cicd"
+  default = "gitlab"
 }
 
 variable "vm_domain" {
   type = string
-  default = "fth.local"
+  default = "local.com"
 }
 
 variable "on_boot" {
@@ -38,16 +31,16 @@ variable "on_boot" {
 
 variable "vm_tags" {
   type = list(string)
-  default = ["c_cd"]
+  default = ["dns"]
 }
 
-variable "cpu_cores" {
+variable "vm_cpu_cores" {
   type = number
-  default = 1
+  default = 4
   description = "Number of CPU cores for the VM"
 }
 
-variable "cpu_sockets" {
+variable "vm_cpu_sockets" {
   type = number
   default = 1
   description = "Number of CPU sockets for the VM"
@@ -55,7 +48,6 @@ variable "cpu_sockets" {
 
 variable "vm_memory" {
   type = number
-  default = 2048
   description = "Memory size for the VM"
 }
 
@@ -71,8 +63,8 @@ variable "vm_disk" {
       size = number
     })
     default = {
-      storage = "local"
-      size = 10
+      storage = "local-lvm"
+      size = 20
     }
     description = "Disk configuration for the VM"
 }
@@ -84,4 +76,14 @@ variable "vm_additional_disks" {
   }))
   default = []
   description = "List of additional disks for the VM"
+}
+
+variable "vm_ip_address" {
+  description = "The IP address of the VM"
+  type = string
+}
+
+variable "vm_ip_gateway" {
+  description = "The default gateway of the VM"
+  type = string
 }

@@ -1,0 +1,28 @@
+#cloud-config
+
+hostname: dns
+
+timezone: Europe/Paris
+
+users:
+  - name: devops
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo
+    ssh-authorized-keys:
+      - ssh-rsa XXXXXXXXXXXXXXXXXXXXX
+    shell: /bin/bash
+
+package_update: true
+package_upgrade: true
+packages:
+  - dnsmasq
+
+write_files:
+  - path: /etc/dnsmasq.conf
+    permissions: '0644'
+    owner: root:root
+    content: |
+      address=/192.168.0.18/gitlab.local.com
+
+runcmd:
+  - sudo systemctl restart dnsmasq
