@@ -78,6 +78,9 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
         gateway = "${var.vm_ip_gateway}"
       } 
     }
+    dns {
+      servers = [ split("/","${var.vm_dns_ip_address}")[0], "8.8.8.8" ]
+    }
     user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
   }
 }

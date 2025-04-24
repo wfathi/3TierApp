@@ -87,3 +87,8 @@ variable "vm_ip_gateway" {
   description = "The default gateway of the VM"
   type = string
 }
+
+variable "vm_dns_ip_address" {
+  description = "The default dns of the VM"
+  type = string
+}

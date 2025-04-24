@@ -8,8 +8,7 @@ users:
   - name: devops
     sudo: ALL=(ALL) NOPASSWD:ALL
     groups: sudo
-    ssh-authorized-keys:
-      - ssh-rsa XXXXXXXXXXXXXXXXXXXXX
+    ssh_authorized_keys:
     shell: /bin/bash
 
 package_update: true
@@ -22,7 +21,12 @@ write_files:
     permissions: '0644'
     owner: root:root
     content: |
-      address=/192.168.0.18/gitlab.local.com
+      address=/gitlab.local.com/192.168.0.18
+      server=8.8.8.8
+      server=1.1.1.1
 
 runcmd:
+  - sudo systemctl stop systemd-resolved
+  - sudo systemctl disable systemd-resolved
+  - echo "nameserver 127.0.0.1" | sudo tee /etc/resolv.conf
   - sudo systemctl restart dnsmasq
