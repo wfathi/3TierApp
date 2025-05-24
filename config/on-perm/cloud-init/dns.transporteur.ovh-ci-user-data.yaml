@@ -9,6 +9,7 @@ users:
     sudo: ALL=(ALL) NOPASSWD:ALL
     groups: sudo
     ssh_authorized_keys:
+      - ssh-rsa 
     shell: /bin/bash
 
 package_update: true
@@ -21,7 +22,7 @@ write_files:
     permissions: '0644'
     owner: root:root
     content: |
-      address=/gitlab.local.com/192.168.0.18
+      address=/gitlab.transporteur.ovh/192.168.0.18
       server=8.8.8.8
       server=1.1.1.1
 

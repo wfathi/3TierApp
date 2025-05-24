@@ -43,12 +43,12 @@ variable "vm_dns_hostname" {
 
 variable "vm_cicd_domain" {
   type = string
-  default = "local.com"
+  default = "transporteur.ovh"
 }
 
 variable "vm_dns_domain" {
   type = string
-  default = "local.com"
+  default = "transporteur.ovh"
 }
 
 variable "on_boot" {

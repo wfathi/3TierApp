@@ -1,0 +1,49 @@
+#cloud-config
+
+hostname: gitlab
+
+timezone: Europe/Paris
+
+users:
+  - name: devops
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo
+    ssh_authorized_keys:
+      - ssh-rsa 
+    shell: /bin/bash
+
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - openssh-server
+  - ca-certificates
+  - tzdata
+  - perl
+
+runcmd:
+  - resolvectl dns eth0 ${vm_dns_ip_address}
+  - systemctl restart systemd-resolved
+  - echo "postfix postfix/mailname string gitlab.${smtp_domain}" | sudo debconf-set-selections
+  - echo "postfix postfix/main_mailer_type string 'Internet Site'" | sudo debconf-set-selections
+  - sudo DEBIAN_FRONTEND=noninteractive apt install -y postfix
+  - curl "https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh" | sudo bash
+  - sudo EXTERNAL_URL="gitlab.${smtp_domain}" apt install -y gitlab-ce
+  - sudo sed -i "s/# gitlab_rails\['smtp_enable'\] =.*/gitlab_rails['smtp_enable'] = true/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_address'\] =.*/gitlab_rails['smtp_address'] = \"${smtp_address}\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_port'\] =.*/gitlab_rails['smtp_port'] = ${smtp_port}/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_user_name'\] =.*/gitlab_rails['smtp_user_name'] = \"${smtp_user_name}\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_password'\] =.*/gitlab_rails['smtp_password'] = \"${smtp_password}\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_domain'\] =.*/gitlab_rails['smtp_domain'] = \"${smtp_domain}\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_authentication'\] =.*/gitlab_rails['smtp_authentication'] = \"plain\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_enable_starttls_auto'\] =.*/gitlab_rails['smtp_enable_starttls_auto'] = true/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_openssl_verify_mode'\] =.*/gitlab_rails['smtp_openssl_verify_mode'] = \"none\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['smtp_tls'\] =.*/gitlab_rails['smtp_tls'] = false/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['gitlab_email_from'\] =.*/gitlab_rails['gitlab_email_from'] = \"${gitlab_email_from}\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['gitlab_email_reply_to'\] =.*/gitlab_rails['gitlab_email_reply_to'] = \"${gitlab_email_reply_to}\"/" /etc/gitlab/gitlab.rb
+  - sudo sed -i "s/# gitlab_rails\['gitlab_email_display_name'\] =.*/gitlab_rails['gitlab_email_display_name'] = \"${gitlab_email_display_name}\"/" /etc/gitlab/gitlab.rb
+  - sudo gitlab-ctl reconfigure
+  - sudo ufw allow OpenSSH
+  - sudo ufw allow http
+  - sudo ufw allow https
+  - sudo ufw enable

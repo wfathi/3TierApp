@@ -5,13 +5,40 @@ data "proxmox_virtual_environment_vms" "template" {
   tags = [var.template_tag]
 }
 
+locals {
+  smtp_server_relay_config_file = var.vm_tags[0] == "cicd" ? file("${path.module}/../../smtp_server_relay_config.key") : null
+  
+  smtp_config_parsed = var.vm_tags[0] == "cicd" ? {
+      smtp_address     = trimspace(regex("smtp_address=(.*)", local.smtp_server_relay_config_file)[0])
+      smtp_port        = trimspace(regex("smtp_port=(.*)", local.smtp_server_relay_config_file)[0])
+      smtp_user_name   = trimspace(regex("smtp_api_key=(.*)", local.smtp_server_relay_config_file)[0])
+      smtp_password    = trimspace(regex("smtp_secret_key=(.*)", local.smtp_server_relay_config_file)[0])
+  } : null
+
+  cloud_init_cicd_template_file = var.vm_tags[0] == "cicd" ? templatefile(
+    "${path.module}/../../cloud-init/${var.vm_hostname}.${var.vm_domain}-ci-user-data.yaml",
+    {
+      smtp_address = local.smtp_config_parsed.smtp_address
+      smtp_port = local.smtp_config_parsed.smtp_port
+      smtp_user_name = local.smtp_config_parsed.smtp_user_name
+      smtp_password = local.smtp_config_parsed.smtp_password
+      smtp_domain = var.vm_domain
+      gitlab_email_from = "${var.vm_hostname}@${var.vm_domain}"
+      gitlab_email_reply_to = "noreply-${var.vm_hostname}@${var.vm_domain}"
+      gitlab_email_display_name = "${var.vm_hostname} ${var.vm_domain}"
+      vm_dns_ip_address = split("/","${var.vm_dns_ip_address}")[0]
+    }
+  ) : null
+}
+
 resource "proxmox_virtual_environment_file" "cloud_config" {
   node_name = var.target_node
   content_type = "snippets"
   datastore_id = "local"
 
   source_raw {
-    data = file("${path.module}/../../cloud-init/${var.vm_hostname}.${var.vm_domain}-ci-user-data.yaml")
+    # data = file("${path.module}/../../cloud-init/${var.vm_hostname}.${var.vm_domain}-ci-user-data.yaml")
+    data = local.cloud_init_cicd_template_file != null ? local.cloud_init_cicd_template_file : file("${path.module}/../../cloud-init/${var.vm_hostname}.${var.vm_domain}-ci-user-data.yaml")
     file_name = "${var.vm_hostname}.${var.vm_domain}-ci-user-data.yaml"
   }
 }
@@ -79,7 +106,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
       } 
     }
     dns {
-      servers = [ split("/","${var.vm_dns_ip_address}")[0], "8.8.8.8" ]
+      servers = var.vm_tags[0] == "dns" ? [ split("/","${var.vm_dns_ip_address}")[0], "8.8.8.8", "8.8.4.4" ] : [ split("/","${var.vm_dns_ip_address}")[0] ]
     }
     user_data_file_id = proxmox_virtual_environment_file.cloud_config.id
   }
